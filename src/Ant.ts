@@ -10,7 +10,7 @@ type Direction = 'up' | 'left' | 'down' | 'right';
 
 const texture = PIXI.Texture.from('./ant.png');
 
-const getNewDirection = (currentDirection: Direction, rotation: 'clockwise' | 'counter'): Direction => {
+const getNewDirection = (currentDirection: Direction, rotation: Rotation): Direction => {
     if (rotation === 'clockwise') {
         switch (currentDirection) {
             case 'up':
@@ -35,6 +35,19 @@ const getNewDirection = (currentDirection: Direction, rotation: 'clockwise' | 'c
     }
 };
 
+type Rotation = 'clockwise' | 'counter';
+
+type AntParams = {
+    step: {
+        full: number;
+        empty: number;
+    };
+    rotation: {
+        full: Rotation;
+        empty: Rotation;
+    };
+};
+
 export class Grid {
     cells: number[][];
     app: PIXI.Application;
@@ -42,6 +55,7 @@ export class Grid {
     h: number;
     antPos: Coordinates;
     antDirection: Direction;
+    antParams: AntParams;
     iteration: number;
     scaleX: number;
     scaleY: number;
@@ -52,6 +66,17 @@ export class Grid {
         this.h = h;
         this.scaleX = this.app.view.width / this.w;
         this.scaleY = this.app.view.height / this.h;
+
+        this.antParams = {
+            step: {
+                full: 1,
+                empty: 1
+            },
+            rotation: {
+                full: 'clockwise',
+                empty: 'counter'
+            }
+        };
 
         this.antPos = {x: Math.floor(w / 2), y: Math.floor(h / 2)};
         this.antDirection = 'down';
@@ -68,20 +93,23 @@ export class Grid {
 
     update() {
         this.iteration++;
-        const rotation = this.cells[this.antPos.y][this.antPos.x] !== 0 ? 'clockwise' : 'counter';
+        const isEmptyCell = this.cells[this.antPos.y][this.antPos.x] === 0;
+        const rotation = isEmptyCell ? this.antParams.rotation['empty'] : this.antParams.rotation['full'];
+        const step = isEmptyCell ? this.antParams.step['empty'] : this.antParams.step['full'];
+
         this.antDirection = getNewDirection(this.antDirection, rotation);
         switch (this.antDirection) {
             case 'up':
-                this.antPos.y -= 1;
+                this.antPos.y -= step;
                 break;
             case 'down':
-                this.antPos.y += 1;
+                this.antPos.y += step;
                 break;
             case 'left':
-                this.antPos.x -= 1;
+                this.antPos.x -= step;
                 break;
             case 'right':
-                this.antPos.x += 1;
+                this.antPos.x += step;
                 break;
         }
         if (this.antPos.x < 0) {
