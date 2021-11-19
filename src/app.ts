@@ -4,7 +4,8 @@ import {Grid} from './Ant';
 const app = new PIXI.Application({width: 800, height: 800});
 document.getElementById('container').appendChild(app.view);
 
-const grid = new Grid(300, 300, app);
+const type = PIXI.utils.isWebGLSupported() ? 'WebGL' : 'canvas';
+const grid = new Grid(100, 100, app);
 
 function draw() {
     for (var i = app.stage.children.length - 1; i >= 0; i--) {

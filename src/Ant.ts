@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js';
-import {map} from './utils';
+import {map, toRGB} from './utils';
 
 type Coordinates = {
     x: number;
@@ -135,6 +135,7 @@ export class Grid {
         const emptyColor = 0xffffff;
         backgroundGraphics.beginFill(emptyColor);
         backgroundGraphics.drawRect(0, 0, this.app.view.width, this.app.view.height);
+        backgroundGraphics.endFill();
         this.app.stage.addChild(backgroundGraphics);
 
         const fullColor = 0x010101;
@@ -145,9 +146,7 @@ export class Grid {
                 }
 
                 const level = map(this.cells[y][x], 0, this.iteration, 250, 0);
-                const levelHex = level.toString(16);
-                const colorHex = `#${levelHex}${levelHex}${levelHex}`;
-                const color = parseInt(colorHex.substring(1), 16);
+                const color = toRGB([level, level, level]);
 
                 const graphics = new PIXI.Graphics();
                 graphics.beginFill(color);
