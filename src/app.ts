@@ -11,7 +11,7 @@ function draw() {
     for (var i = app.stage.children.length - 1; i >= 0; i--) {
         app.stage.removeChild(app.stage.children[i]);
     }
-    for (let _ = 0; _ < 100; _++) {
+    for (let _ = 0; _ < 200; _++) {
         grid.update();
     }
     grid.update();

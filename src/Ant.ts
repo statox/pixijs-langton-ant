@@ -6,6 +6,10 @@ type Coordinates = {
     y: number;
 };
 
+const coordinatesToString = (c: Coordinates): string => {
+    return `${c.x};${c.y}`;
+};
+
 type Direction = 'up' | 'left' | 'down' | 'right';
 
 const texture = PIXI.Texture.from('./ant.png');
@@ -47,6 +51,34 @@ type AntParams = {
         empty: Rotation;
     };
 };
+
+/*
+ * const colors = [
+ *     [67, 87, 145] as [number, number, number],
+ *     [167, 219, 17] as [number, number, number],
+ *     [78, 86, 237] as [number, number, number],
+ *     [209, 164, 5] as [number, number, number],
+ *     [200, 98, 203] as [number, number, number],
+ *     [250, 250, 46] as [number, number, number],
+ *     [173, 201, 60] as [number, number, number],
+ *     [165, 65, 110] as [number, number, number],
+ *     [63, 191, 250] as [number, number, number]
+ * ];
+ */
+
+const colors = [
+    [99, 71, 77] as [number, number, number],
+    [170, 118, 124] as [number, number, number],
+    [214, 161, 132] as [number, number, number],
+    [255, 166, 134] as [number, number, number],
+    [254, 193, 150] as [number, number, number],
+
+    [106, 78, 84] as [number, number, number],
+    [113, 71, 76] as [number, number, number],
+    [122, 69, 41] as [number, number, number],
+    [143, 38, 0] as [number, number, number],
+    [121, 51, 1] as [number, number, number]
+];
 
 export class Grid {
     cells: number[][];
@@ -130,31 +162,72 @@ export class Grid {
         }
     }
 
-    draw() {
-        let backgroundGraphics = new PIXI.Graphics();
-        const emptyColor = 0xffffff;
-        backgroundGraphics.beginFill(emptyColor);
-        backgroundGraphics.drawRect(0, 0, this.app.view.width, this.app.view.height);
-        backgroundGraphics.endFill();
-        this.app.stage.addChild(backgroundGraphics);
+    findGroup(start: Coordinates) {
+        const visited = new Set<string>();
+        const toCheck = [start];
+        const group = [];
+        while (toCheck.length) {
+            const current = toCheck.pop();
+            const {x, y} = current;
+            const currentStr = coordinatesToString(current);
+            if (visited.has(currentStr)) {
+                continue;
+            }
+            group.push(current);
+            visited.add(currentStr);
 
-        const fullColor = 0x010101;
-        for (let x = 0; x < this.w; x++) {
-            for (let y = 0; y < this.h; y++) {
-                if (this.cells[y][x] === 0) {
-                    continue;
-                }
-
-                const level = map(this.cells[y][x], 0, this.iteration, 250, 0);
-                const color = toRGB([level, level, level]);
-
-                const graphics = new PIXI.Graphics();
-                graphics.beginFill(color);
-                graphics.drawRect(x * this.scaleX, y * this.scaleY, this.scaleX, this.scaleY);
-                this.app.stage.addChild(graphics);
+            if (current.x > 0 && this.cells[y][x - 1] === 0) {
+                toCheck.push({x: x - 1, y});
+            }
+            if (current.x < this.w - 1 && this.cells[y][x + 1] === 0) {
+                toCheck.push({x: x + 1, y});
+            }
+            if (current.y > 0 && this.cells[y - 1][x] === 0) {
+                toCheck.push({x, y: y - 1});
+            }
+            if (current.y < this.h - 1 && this.cells[y + 1][x] === 0) {
+                toCheck.push({x, y: y + 1});
             }
         }
+        return group;
+    }
 
+    drawCell(coord: Coordinates, color: [number, number, number]) {
+        const {x, y} = coord;
+        const graphics = new PIXI.Graphics();
+        graphics.beginFill(toRGB(color));
+        graphics.drawRect(x * this.scaleX, y * this.scaleY, this.scaleX, this.scaleY);
+        this.app.stage.addChild(graphics);
+        graphics.endFill();
+    }
+
+    drawGroups() {
+        const visited = new Set<string>();
+        let groupsFound = 0;
+        for (let y = 0; y < this.h; y++) {
+            for (let x = 0; x < this.w; x++) {
+                if (this.cells[y][x] === 0) {
+                    if (visited.has(coordinatesToString({x, y}))) {
+                        continue;
+                    }
+                    groupsFound++;
+                    const group = this.findGroup({x, y});
+                    const color = colors[groupsFound % colors.length];
+
+                    for (let i = 0; i < group.length; i++) {
+                        const c = group[i];
+                        visited.add(coordinatesToString(c));
+                        this.drawCell(c, color);
+                    }
+                } else {
+                    const color = [35, 26, 28] as [number, number, number];
+                    this.drawCell({x, y}, color);
+                }
+            }
+        }
+    }
+
+    drawAnt() {
         const ant = new PIXI.Sprite(texture);
         ant.x = this.antPos.x * this.scaleX + this.scaleX / 2;
         ant.y = this.antPos.y * this.scaleY + this.scaleY / 2;
@@ -171,5 +244,10 @@ export class Grid {
             ant.angle = 270;
         }
         this.app.stage.addChild(ant);
+    }
+
+    draw() {
+        this.drawGroups();
+        this.drawAnt();
     }
 }
