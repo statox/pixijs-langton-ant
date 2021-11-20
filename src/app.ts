@@ -7,6 +7,9 @@ document.getElementById('container').appendChild(app.view);
 const type = PIXI.utils.isWebGLSupported() ? 'WebGL' : 'canvas';
 const grid = new Grid(100, 100, app);
 
+var FXAAFilter = new PIXI.filters.FXAAFilter();
+FXAAFilter.blendMode = PIXI.BLEND_MODES.HUE;
+
 function draw() {
     for (var i = app.stage.children.length - 1; i >= 0; i--) {
         app.stage.removeChild(app.stage.children[i]);
@@ -16,6 +19,7 @@ function draw() {
     }
     grid.update();
     grid.draw();
+    app.stage.filters = [FXAAFilter];
     requestAnimationFrame(draw);
 }
 draw();
